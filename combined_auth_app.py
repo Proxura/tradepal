@@ -39,9 +39,9 @@ def callback():
         "client_secret": CLIENT_SECRET
     }
 
-    headers = { "Content-Type": "application/x-www-form-urlencoded" }
+       headers = { "Content-Type": "application/x-www-form-urlencoded" }
 
-   response = requests.post("https://client.schwab.com/oauth2/token", data=data, headers=headers)
+    response = requests.post("https://client.schwab.com/oauth2/token", data=data, headers=headers)
 
     if response.status_code == 200:
         tokens = response.json()
@@ -50,6 +50,7 @@ def callback():
         return "✅ Token saved to token.json"
     else:
         return f"❌ Error: {response.status_code} {response.text}"
+
 
 @app.route("/token")
 def view_token():
