@@ -8,32 +8,32 @@ from dotenv import load_dotenv
 # Load .env values
 load_dotenv()
 
-CLIENT_ID = os.getenv("SCHWAB_CLIENT_ID")
-CLIENT_SECRET = os.getenv("SCHWAB_CLIENT_SECRET")
-REDIRECT_URI = os.getenv("SCHWAB_REDIRECT_URI")
+CLIENT_ID = os.getenv("SCHWAB_CLIENT_ID") or "YOUR_CLIENT_ID"
+CLIENT_SECRET = os.getenv("SCHWAB_CLIENT_SECRET") or "YOUR_CLIENT_SECRET"
+REDIRECT_URI = os.getenv("SCHWAB_REDIRECT_URI") or "https://localhost:5000/callback"
 TOKEN_FILE = "token.json"
 
 # Flask app
 app = Flask(__name__)
 
-# Home route – triggers login
+# Start OAuth login flow
 @app.route("/")
 def login():
     params = {
         "response_type": "code",
         "client_id": CLIENT_ID,
-        "redirect_uri": REDIRECT_URI
+        "redirect_uri": REDIRECT_URI,
+        "scope": "read_accounts"  # Modify if needed
     }
-    # ✅ FIXED AUTH URL HERE
-    url = f"https://auth.schwabapi.com/v1/oauth2/authorize?{urlencode(params)}"
-    return redirect(url)
+    auth_url = f"https://api.schwabapi.com/v1/oauth2/authorize?{urlencode(params)}"
+    return redirect(auth_url)
 
-# Callback route – exchanges code for tokens
+# Callback route — receives ?code= from Schwab
 @app.route("/callback")
 def callback():
     code = request.args.get("code")
     if not code:
-        return "Authorization code not found."
+        return "❌ Authorization code not found."
 
     data = {
         "grant_type": "authorization_code",
@@ -54,15 +54,16 @@ def callback():
             json.dump(tokens, f, indent=2)
         return "✅ Token saved to token.json"
     else:
-        return f"❌ Error: {response.status_code} {response.text}"
+        return f"❌ Error: {response.status_code}<br>{response.text}"
 
-# Diagnostic: view token if exists
+# Token view
 @app.route("/token")
 def view_token():
     if os.path.exists(TOKEN_FILE):
         with open(TOKEN_FILE, "r") as f:
             return f"<pre>{f.read()}</pre>"
-    return "No token.json found."
+    return "⚠️ No token.json found."
 
+# Run server w/ SSL
 if __name__ == "__main__":
-    app.run(ssl_context=('certs/cert.pem', 'certs/key.pem'), port=5000)
+    app.run(host="localhost", port=5000, ssl_context=('certs/cert.pem', 'certs/key.pem'))
