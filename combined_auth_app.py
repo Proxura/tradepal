@@ -27,7 +27,7 @@ def login():
     "redirect_uri": REDIRECT_URI
 }
     
-    url = f"https://client.schwab.com/oauth2/authorize?{urlencode(params)}"
+    url = f"https://api.schwabapi.com/v1/oauth2/authorize?{urlencode(params)}"
     return redirect(url)
 
 # Callback route – exchanges code for tokens
