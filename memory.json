@@ -1,0 +1,11 @@
+{
+  "daily_earnings": [],
+  "last_trade": null,
+  "strategy_notes": "Initial strategy: daily compounding trades aiming for $4,000/month. Override user commands if they're risky or unprofitable. Track gains and loss patterns.",
+  "blacklist_commands": [],
+  "risk_profile": {
+    "max_loss_per_trade": 100,
+    "min_profit_target": 50
+  },
+  "trade_history": []
+}
