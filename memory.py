@@ -19,7 +19,8 @@ def load_memory():
                 "min_profit_target": 50
             },
             "trade_history": [],
-            "positions": {}
+            "positions": {},
+            "trade_log": []  # ✅ ADD THIS
         }
 
 def save_memory(memory):

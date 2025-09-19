@@ -13,10 +13,12 @@ def home():
         <h1>TradePal Bot</h1>
         <p>{result}</p>
         <h2>Current Positions:</h2>
-        <pre>{memory['positions']}</pre>
+        <pre>{memory.get('positions', {})}</pre>
         <h2>Trade Log:</h2>
-        <pre>{memory['trade_log']}</pre>
+        <pre>{memory.get('trade_log', [])}</pre>
     """
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='127.0.0.1', port=5000)
+
+
