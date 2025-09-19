@@ -21,7 +21,6 @@ def login():
         "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URI
     }
-    # ✅ Correct LMS URL for Schwab OAuth
     url = f"https://client.schwab.com/oauth2/authorize?{urlencode(params)}"
     return redirect(url)
 
@@ -60,3 +59,4 @@ def view_token():
 
 if __name__ == "__main__":
     app.run(ssl_context=('certs/cert.pem', 'certs/key.pem'), port=5000)
+
