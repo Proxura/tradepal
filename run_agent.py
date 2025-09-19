@@ -1,113 +1,59 @@
 import argparse
-import json
-import os
 import time
-from logic_rules import generate_trade_ideas, evaluate_trade
-from auth import get_schwab_session, place_order, check_order_status, get_current_price
+import os
+from logic_rules import get_trade_signals_from_csvs, get_trade_signals_from_schwab
+from memory import log_trade, load_memory, save_memory
+from agent import place_trade, monitor_trade
 
-MEMORY_FILE = 'memory.json'
+def run_scan():
+    # Check if CSV files exist
+    flow_exists = os.path.exists("data/flow.csv")
+    darkpool_exists = os.path.exists("data/darkpool.csv")
 
-# Load memory
-if os.path.exists(MEMORY_FILE):
-    with open(MEMORY_FILE, 'r') as f:
-        memory = json.load(f)
-else:
-    memory = {
-        "daily_earnings": 0,
-        "last_trade": {},
-        "strategy_notes": "",
-        "blacklist_commands": [],
-        "risk_profile": {
-            "max_loss_per_trade": 100,
-            "min_profit_target": 50
-        },
-        "trade_history": [],
-        "auto_limits": {
-            "take_profit_pct": 0.40,
-            "stop_loss_pct": -0.30,
-            "poll_interval_seconds": 60
-        }
-    }
-
-def save_memory():
-    with open(MEMORY_FILE, 'w') as f:
-        json.dump(memory, f, indent=2)
-
-def scan_and_suggest():
-    print("\n📊 Scanning data/flow.csv and data/darkpool.csv...")
-    trade_ideas = generate_trade_ideas("data/flow.csv", "data/darkpool.csv")
+    if flow_exists and darkpool_exists:
+        print("📊 CSV files detected. Using flow + dark pool data...")
+        trade_ideas = get_trade_signals_from_csvs()
+    else:
+        print("📡 No CSVs found. Scanning Schwab API for trade ideas...")
+        trade_ideas = get_trade_signals_from_schwab()
 
     if not trade_ideas:
-        print("No high-probability trade ideas found.")
+        print("🚫 No valid trade signals found.")
         return
 
-    for i, idea in enumerate(trade_ideas[:3]):
-        print(f"\n🔥 Trade Idea #{i+1}")
-        print(json.dumps(idea, indent=2))
+    print("\n💡 Trade Ideas Found:")
+    for idx, idea in enumerate(trade_ideas):
+        print(f"{idx + 1}. {idea}")
 
-    print("\nType 'GO' to execute the first idea, or Ctrl+C to cancel.")
-    if input().strip().lower() == 'go':
-        execute_trade(trade_ideas[0])
+    print("\n⚠️ Type 'GO' to confirm execution of the first trade.")
+    confirm = input(">>> ").strip().lower()
+    if confirm != "go":
+        print("❌ Trade aborted by user.")
+        return
 
-def execute_trade(trade):
-    session = get_schwab_session()
-    symbol = trade['symbol']
-    qty = trade['qty']
-    entry_price = float(get_current_price(symbol))
-    limit_price = round(entry_price * (1 + memory['auto_limits']['take_profit_pct']), 2)
-    stop_price = round(entry_price * (1 + memory['auto_limits']['stop_loss_pct']), 2)
+    trade = trade_ideas[0]
+    print(f"🚀 Placing trade: {trade}")
+    trade_id = place_trade(trade)
+    log_trade(trade_id, trade)
 
-    print(f"\n🚀 Executing trade for {symbol} @ ${entry_price} | TP: ${limit_price} | SL: ${stop_price}")
-    order_id = place_order(session, symbol, qty)
-
-    memory['last_trade'] = {
-        "symbol": symbol,
-        "qty": qty,
-        "entry": entry_price,
-        "tp": limit_price,
-        "sl": stop_price,
-        "order_id": order_id,
-        "status": "live"
-    }
-    memory['trade_history'].append(memory['last_trade'])
-    save_memory()
-
-    monitor_trade(session)
-
-def monitor_trade(session):
-    print("\n⏱ Monitoring trade...")
+    print("📈 Monitoring trade with +40% / –30% rule...")
     while True:
-        last = memory['last_trade']
-        current = float(get_current_price(last['symbol']))
-        print(f"[MONITOR] {last['symbol']} @ ${current:.2f} (TP: ${last['tp']} | SL: ${last['sl']})")
-
-        if current >= last['tp']:
-            print("✅ Take-profit hit. Locking gain.")
-            memory['last_trade']['status'] = 'closed_tp'
-            memory['daily_earnings'] += memory['risk_profile']['min_profit_target']
+        status = monitor_trade(trade_id)
+        if status in ["stop-loss hit", "take-profit hit", "closed"]:
+            print(f"✅ Trade complete: {status}")
             break
-        elif current <= last['sl']:
-            print("🛑 Stop-loss hit. Cutting loss.")
-            memory['last_trade']['status'] = 'closed_sl'
-            memory['daily_earnings'] -= memory['risk_profile']['max_loss_per_trade']
-            break
-
-        time.sleep(memory['auto_limits']['poll_interval_seconds'])
-
-    save_memory()
+        time.sleep(60)  # Check every 60 seconds
 
 def main():
-    parser = argparse.ArgumentParser(description='Trading Agent CLI')
-    parser.add_argument('--scan', action='store_true', help='Scan CSVs and generate trade ideas')
-    parser.add_argument('--run', action='store_true', help='Run and monitor current trade')
+    parser = argparse.ArgumentParser(description="Trading Agent CLI")
+    parser.add_argument("--scan", action="store_true", help="Run trade signal scan and monitoring")
+
     args = parser.parse_args()
 
     if args.scan:
-        scan_and_suggest()
-    elif args.run:
-        monitor_trade(get_schwab_session())
+        run_scan()
     else:
-        print("⚠️ No valid arguments. Use --scan or --run")
+        print("📘 Usage: python run_agent.py --scan")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
