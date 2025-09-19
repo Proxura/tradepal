@@ -1,5 +1,3 @@
-# combined_auth_app.py
-
 import os
 import json
 import requests
@@ -22,12 +20,12 @@ app = Flask(__name__)
 @app.route("/")
 def login():
     params = {
-    "response_type": "code",
-    "client_id": CLIENT_ID,
-    "redirect_uri": REDIRECT_URI
-}
-    
-    url = f"https://api.schwabapi.com/v1/oauth2/authorize?{urlencode(params)}"
+        "response_type": "code",
+        "client_id": CLIENT_ID,
+        "redirect_uri": REDIRECT_URI
+    }
+    # ✅ FIXED AUTH URL HERE
+    url = f"https://auth.schwabapi.com/v1/oauth2/authorize?{urlencode(params)}"
     return redirect(url)
 
 # Callback route – exchanges code for tokens
@@ -49,7 +47,7 @@ def callback():
     }
 
     response = requests.post("https://api.schwabapi.com/v1/oauth2/token", data=data, headers=headers)
-    
+
     if response.status_code == 200:
         tokens = response.json()
         with open(TOKEN_FILE, "w") as f:
@@ -68,4 +66,3 @@ def view_token():
 
 if __name__ == "__main__":
     app.run(ssl_context=('certs/cert.pem', 'certs/key.pem'), port=5000)
-
