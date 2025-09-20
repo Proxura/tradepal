@@ -6,7 +6,7 @@ from flask import Flask, request
 oapp = Flask(__name__)
 
 CLIENT_ID = os.getenv("SCHWAB_CLIENT_ID")
-REDIRECT_URI = "http://127.0.0.1:5000/callback"
+REDIRECT_URI = "http://127.0.0.1:8182/callback"
 AUTH_URL = "https://api.schwabapi.com/v1/oauth/authorize"
 TOKEN_URL = "https://api.schwabapi.com/v1/oauth/token"
 ACCESS_TOKEN_FILE = "access_token.txt"
@@ -44,5 +44,5 @@ def callback():
         return f"❌ Error retrieving token: {response.text}"
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    app.run(port=8182)
 

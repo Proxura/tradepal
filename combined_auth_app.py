@@ -58,5 +58,6 @@ def view_token():
     return "No token.json found."
 
 if __name__ == "__main__":
-    app.run(ssl_context=('certs/cert.pem', 'certs/key.pem'), port=5000)
+    app.run(ssl_context=('certs/cert.pem', 'certs/key.pem'), port=8182)
+
 
