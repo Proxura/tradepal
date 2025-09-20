@@ -40,7 +40,7 @@ def callback():
 
     headers = { "Content-Type": "application/x-www-form-urlencoded" }
 
-    response = requests.post("https://client.schwab.com/oauth2/token", data=data, headers=headers)
+   response = requests.post("https://api.schwabapi.com/v1/oauth/token", data=data, headers=headers)
 
     if response.status_code == 200:
         tokens = response.json()
