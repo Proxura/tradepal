@@ -1,63 +1,48 @@
-import os
-import json
+from flask import Flask, request
 import requests
 from urllib.parse import urlencode
-from flask import Flask, request, redirect
-from dotenv import load_dotenv
-
-load_dotenv()
-
-CLIENT_ID = os.getenv("SCHWAB_CLIENT_ID")
-CLIENT_SECRET = os.getenv("SCHWAB_CLIENT_SECRET")
-REDIRECT_URI = os.getenv("SCHWAB_REDIRECT_URI")
-TOKEN_FILE = "token.json"
+import webbrowser
+import os
 
 app = Flask(__name__)
+
+CLIENT_ID = os.getenv("SCHWAB_CLIENT_ID")
+REDIRECT_URI = os.getenv("SCHWAB_REDIRECT_URI")
+CERT_PATH = 'certs/cert.pem'
+KEY_PATH = 'certs/key.pem'
 
 @app.route("/")
 def login():
     params = {
-        "response_type": "code",
         "client_id": CLIENT_ID,
-        "redirect_uri": REDIRECT_URI
+        "redirect_uri": REDIRECT_URI,
+        "response_type": "code",
+        "scope": "read_accounts trade",
     }
-    url = f"https://client.schwab.com/oauth2/authorize?{urlencode(params)}"
-    return redirect(url)
+    url = f"https://api.schwabapi.com/v1/oauth/authorize?{urlencode(params)}"
+    webbrowser.open(url)
+    return "Opened Schwab login page. Please complete the login and authorize."
 
 @app.route("/callback")
 def callback():
     code = request.args.get("code")
-    if not code:
-        return "Authorization code not found."
-
     data = {
         "grant_type": "authorization_code",
         "code": code,
         "redirect_uri": REDIRECT_URI,
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET
     }
-
-    headers = { "Content-Type": "application/x-www-form-urlencoded" }
-
-   response = requests.post("https://api.schwabapi.com/v1/oauth/token", data=data, headers=headers)
-
-    if response.status_code == 200:
-        tokens = response.json()
-        with open(TOKEN_FILE, "w") as f:
-            json.dump(tokens, f, indent=2)
-        return "✅ Token saved to token.json"
-    else:
-        return f"❌ Error: {response.status_code} {response.text}"
-
-@app.route("/token")
-def view_token():
-    if os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE, "r") as f:
-            return f"<pre>{f.read()}</pre>"
-    return "No token.json found."
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
+    }
+    response = requests.post("https://api.schwabapi.com/v1/oauth/token", data=data, headers=headers, cert=(CERT_PATH, KEY_PATH))
+    tokens = response.json()
+    
+    # Save tokens locally
+    with open("tokens.json", "w") as f:
+        f.write(str(tokens))
+    
+    return f"Tokens received and saved: {tokens}"
 
 if __name__ == "__main__":
-    app.run(ssl_context=('certs/cert.pem', 'certs/key.pem'), port=8182)
-
-
+    app.run(ssl_context=(CERT_PATH, KEY_PATH), port=8182)
