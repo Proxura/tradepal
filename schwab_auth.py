@@ -21,7 +21,7 @@ def construct_init_auth_url() -> tuple[str, str, str]:
 def construct_headers_and_payload(returned_url, app_key, app_secret, redirect):
     response_code = f"{returned_url.split('code=')[1].split('%40')[0]}@"
 
-       credentials = f"{app_key}:{app_secret}"
+    credentials = f"{app_key}:{app_secret}"
     base64_credentials = base64.b64encode(credentials.encode("utf-8")).decode(
         "utf-8"
     )
