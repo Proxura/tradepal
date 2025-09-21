@@ -26,7 +26,7 @@ def construct_headers_and_payload(returned_url, app_key, app_secret, redirect):
         "utf-8"
     )
 
-     headers = {
+    headers = {
         "Authorization": f"Basic {base64_credentials}",
         "Content-Type": "application/x-www-form-urlencoded",
     }
