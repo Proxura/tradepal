@@ -1,87 +1,62 @@
+import base64
 import requests
 import webbrowser
-import urllib.parse
-import json
-import os
+from loguru import logger
 
-# ========== CONFIGURATION ==========
-CLIENT_ID = "tsTmzjKIa6HveehHUsOeagy2l4Gls2eMSnGHWkbXp5MXAVej"
-CLIENT_SECRET = "HVeGQsBoO7JoCVjEdyHEmb0IdCPHkk0ZGKRTtSxqbOClghdP1Zmw3aC1QAoZLAoh"
-REDIRECT_URI = "https://127.0.0.1:5000/callback"
-TOKEN_FILE = "schwab_tokens.json"
-AUTH_URL = "https://api.schwabapi.com/v1/oauth/authorize"
-TOKEN_URL = "https://api.schwabapi.com/v1/oauth/token"
-# ===================================
 
-def get_authorization_code():
-    params = {
-        "client_id": CLIENT_ID,
-        "redirect_uri": REDIRECT_URI,
-        "response_type": "code"
+def construct_init_auth_url():
+    app_key = "tsTmzjKIa6HveehHUsOeagy21l4Gls2eMSnGHWkbXp5MXAVej"
+    app_secret = "HVeGQsBoO7JoCVjEdyHEmb0IdCPHkk0ZGKRTtSxqbOClghdP1Zmw3aC1QAoZLAoh"
+    redirect = "https://127.0.0.1"
+
+    auth_url = f"https://api.schwabapi.com/v1/oauth/authorize?client_id={app_key}"
+
+    logger.info("Click the link to authenticate and copy the FULL returned URL:")
+    logger.info(auth_url)
+
+    return app_key, app_secret, redirect
+
+
+def construct_headers_and_payload(returned_url, app_key, app_secret, redirect):
+    # Extract just the code from the returned URL
+    response_code = f"{returned_url.split('code=')[1].split('%40')[0]}@"
+
+    # Base64 encode the app_key + app_secret
+    combined = f"{app_key}:{app_secret}"
+    encoded = base64.b64encode(combined.encode()).decode()
+
+    headers = {
+        "Authorization": f"Basic {encoded}",
+        "Content-Type": "application/x-www-form-urlencoded",
     }
-    url = f"{AUTH_URL}?{urllib.parse.urlencode(params)}"
-    print("Opening browser for Schwab login...")
-    webbrowser.open(url)
 
-    code = input("Paste the 'code' from the redirect URL:\n> ").strip()
-    return code
-
-def exchange_code_for_tokens(auth_code):
-    data = {
+    payload = {
         "grant_type": "authorization_code",
-        "code": auth_code,
-        "redirect_uri": REDIRECT_URI,
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET
+        "code": response_code,
+        "redirect_uri": redirect,
     }
-    headers = { "Content-Type": "application/x-www-form-urlencoded" }
 
-    response = requests.post(TOKEN_URL, data=data, headers=headers)
-    if response.status_code != 200:
-        print("ERROR: Failed to retrieve tokens.")
-        print(response.text)
-        return None
+    return headers, payload
 
-    tokens = response.json()
-    with open(TOKEN_FILE, "w") as f:
-        json.dump(tokens, f)
-    print("Tokens saved.")
-    return tokens
 
-def refresh_tokens():
-    if not os.path.exists(TOKEN_FILE):
-        print("No existing token file. Run the login flow first.")
-        return None
+def retrieve_tokens(headers, payload):
+    token_url = "https://api.schwabapi.com/v1/oauth/token"
+    response = requests.post(token_url, headers=headers, data=payload)
+    return response.json()
 
-    with open(TOKEN_FILE, "r") as f:
-        old_tokens = json.load(f)
 
-    data = {
-        "grant_type": "refresh_token",
-        "refresh_token": old_tokens["refresh_token"],
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET
-    }
-    headers = { "Content-Type": "application/x-www-form-urlencoded" }
+def main():
+    app_key, app_secret, redirect = construct_init_auth_url()
+    webbrowser.open(f"https://api.schwabapi.com/v1/oauth/authorize?client_id={app_key}")
 
-    response = requests.post(TOKEN_URL, data=data, headers=headers)
-    if response.status_code != 200:
-        print("ERROR: Failed to refresh tokens.")
-        print(response.text)
-        return None
+    returned_url = input("Paste the full redirect URL from the browser: ")
 
-    tokens = response.json()
-    with open(TOKEN_FILE, "w") as f:
-        json.dump(tokens, f)
-    print("Tokens refreshed.")
-    return tokens
+    headers, payload = construct_headers_and_payload(returned_url, app_key, app_secret, redirect)
+    tokens = retrieve_tokens(headers, payload)
+
+    logger.debug(tokens)
+    return "Done!"
+
 
 if __name__ == "__main__":
-    if not os.path.exists(TOKEN_FILE):
-        code = get_authorization_code()
-        tokens = exchange_code_for_tokens(code)
-    else:
-        tokens = refresh_tokens()
-
-    if tokens:
-        print("Access Token:", tokens["access_token"][:40], "...")
+    main()
