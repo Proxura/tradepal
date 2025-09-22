@@ -1,8 +1,13 @@
 __pycache__/
 *.pyc
+
+# Token and environment files
+secure/token.json
 token.json
-certs/
 .env
 .env.*
+certs/
+
+# Logs and virtual environments
 *.log
 venv/

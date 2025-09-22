@@ -9,7 +9,7 @@ import base64
 app_key = 'tsTmzjKIa6HveehHUsOeagy2l4Gls2eMSnGHWkbXp5MXAVej'
 app_secret = 'HVeGQsBoO7JoCVjEdyHEmb0IdCPHkk0ZGKRTtSxqbOClghdP1Zmw3aC1QAoZLAoh'
 redirect_uri = 'https://127.0.0.1'
-token_file_path = 'secure/token.json'  # 👈 NEW LINE
+token_file_path = 'secure/token.json'  # 👈 Save token securely
 
 # OAuth endpoints
 auth_base_url = "https://api.schwabapi.com/v1/oauth/authorize"
@@ -30,7 +30,7 @@ def extract_code_from_url(returned_url):
     return code
 
 def get_access_token(auth_code):
-    # Proper HTTP Basic Auth header
+    # Encode credentials for Basic Auth
     client_creds = f"{app_key}:{app_secret}"
     encoded_creds = base64.b64encode(client_creds.encode()).decode()
 
@@ -56,7 +56,7 @@ def save_token_to_file(token_data):
     token_data['timestamp'] = time.time()
     with open(token_file_path, 'w') as f:
         json.dump(token_data, f, indent=2)
-    print("Token saved to secure/token.json")  
+    print("✅ Token saved to secure/token.json")
 
 def main():
     construct_init_auth_url()
