@@ -1,3 +1,4 @@
+# Python cache and compiled files
 __pycache__/
 *.pyc
 
@@ -11,3 +12,7 @@ certs/
 # Logs and virtual environments
 *.log
 venv/
+
+# Scanner signal files (keep folder, ignore CSVs)
+scanner/*.csv
+!scanner/.keep
