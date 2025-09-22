@@ -1,24 +1,27 @@
 {
-  "daily_earnings": [],
-  "last_trade": "sell",
-  "strategy_notes": "Initial strategy: daily compounding trades aiming for $4,000/month. Override user commands if they're risky or unprofitable. Track gains and loss patterns.",
-  "blacklist_commands": [],
+  "last_trade": {
+    "ticker": "TSLA",
+    "type": "option",
+    "entry_price": 2.97,
+    "target_price": 4.16,
+    "stop_loss": 2.08,
+    "timestamp": 1695061215
+  },
+  "daily_earnings": 364,
   "risk_profile": {
     "max_loss_per_trade": 100,
     "min_profit_target": 50
   },
+  "strategy_notes": "Favor uranium sector until October 1st",
+  "blacklist_commands": ["buy TSLA if below $600"],
   "trade_history": [
     {
-      "action": "buy",
-      "symbol": "AAPL",
-      "qty": 1,
-      "reason": "Random signal logic"
-    },
-    {
-      "action": "sell",
-      "symbol": "AAPL",
-      "qty": 1,
-      "reason": "Random signal logic"
+      "date": "2025-09-18",
+      "ticker": "CCJ",
+      "type": "equity",
+      "action": "trim",
+      "percent": 25,
+      "gain": 18.4
     }
   ]
 }
