@@ -2,26 +2,35 @@
   "last_trade": {
     "ticker": "TSLA",
     "type": "option",
-    "entry_price": 2.97,
-    "target_price": 4.16,
-    "stop_loss": 2.08,
-    "timestamp": 1695061215
+    "action": "BUY",
+    "timestamp": 1727097600,
+    "confidence": 82
   },
-  "daily_earnings": 364,
+  "daily_earnings": 165.50,
   "risk_profile": {
     "max_loss_per_trade": 100,
-    "min_profit_target": 50
+    "min_profit_target": 50,
+    "option_target_pct": 40,
+    "option_stop_pct": 30,
+    "equity_target_pct": 8,
+    "equity_stop_pct": 5
   },
-  "strategy_notes": "Favor uranium sector until October 1st",
-  "blacklist_commands": ["buy TSLA if below $600"],
+  "strategy_notes": [
+    "Options: Sell at +40%, Stop at –30%",
+    "Equity: Trim at +8%, Exit at –5%",
+    "Only trade high-confidence (≥70%) alerts"
+  ],
+  "blacklist_commands": ["CVNA", "TQQQ"],
   "trade_history": [
     {
-      "date": "2025-09-18",
       "ticker": "CCJ",
       "type": "equity",
-      "action": "trim",
-      "percent": 25,
-      "gain": 18.4
+      "action": "TRIM",
+      "entry_price": 82.12,
+      "exit_price": 85.25,
+      "shares": 5,
+      "gain": 15.65,
+      "timestamp": 1727094000
     }
   ]
 }
